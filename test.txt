@@ -1,1 +1,2 @@
-this is my first text file
+Så nu ska vi ändra lite grejjer i den här och commita den igen.
+Så vad ska vi göra här? Jag vet inte.
