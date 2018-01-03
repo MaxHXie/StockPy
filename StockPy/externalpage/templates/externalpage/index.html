@@ -47,48 +47,51 @@
                                     </button>
                                     <h5 class="card-description"> or be classical </h5>
                                 </div>
-                                <form class="form" method="" action="">
-                                    <div class="input-group">
-                                        <span class="input-group-addon">
-                                            <i class="now-ui-icons users_circle-08"></i>
-                                        </span>
-                                        <input type="text" class="form-control" placeholder="First name...">
-                                    </div>
-                                    <div class="input-group">
-                                        <span class="input-group-addon">
-                                            <i class="now-ui-icons text_caps-small"></i>
-                                        </span>
-                                        <input type="text" placeholder="Last name..." class="form-control">
-                                    </div>
-                                    <div class="input-group">
-                                        <span class="input-group-addon">
-                                            <i class="now-ui-icons ui-1_email-85"></i>
-                                        </span>
-                                        <input type="text" class="form-control" placeholder="Email...">
-                                    </div>
-                                    <div class="input-group">
-                                        <span class="input-group-addon">
-                                            <i class="now-ui-icons ui-1_lock-circle-open"></i>
-                                        </span>
-                                        <input type="text" placeholder="Password..." class="form-control">
-                                    </div>
-                                    <div class="input-group">
-                                        <span class="input-group-addon">
-                                            <i class="now-ui-icons ui-1_lock-circle-open"></i>
-                                        </span>
-                                        <input type="text" placeholder="Password again..." class="form-control">
-                                    </div>
+
+                                {% for field in register_form %}
+                                    {% for error in field.errors %}
+                                        <span style="color:red;">{{ error }}</span>
+                                    {% endfor %}
+                                {% endfor %}
+
+                                {% if register_fail %}
+                                    <span style="color:red;"> {{ register_fail }} </span>
+                                {% endif %}
+
+                                <form class="form" method="post" action="/register/">
+                                    {% csrf_token %}
+                                    {% for field in register_form %}
+                                        {% if field.name != "agree_to_terms" %}
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    {% if field.name == "first_name" %}
+                                                        <i class="now-ui-icons users_circle-08"></i>
+                                                    {% elif field.name == "last_name" %}
+                                                        <i class="now-ui-icons text_caps-small"></i>
+                                                    {% elif field.name == "email" %}
+                                                        <i class="now-ui-icons ui-1_email-85"></i>
+                                                    {% elif field.name == "password1" %}
+                                                        <i class="now-ui-icons ui-1_lock-circle-open"></i>
+                                                    {% elif field.name == "password2" %}
+                                                        <i class="now-ui-icons ui-1_lock-circle-open"></i>
+                                                    {% endif %}
+                                                </span>
+                                                {{ field }}
+                                            </div>
+                                        {% else %}
+                                            <div class="form-check">
+                                                <label class="form-check-label">
+                                                    {{ field }}
+                                                    <span class="form-check-sign"></span>
+                                                    I agree to the
+                                                    <a href="#">terms and conditions</a>.
+                                                </label>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
                                     <!-- If you want to add a checkbox to this form, uncomment this code -->
-                                    <div class="form-check">
-                                        <label class="form-check-label">
-                                            <input class="form-check-input" type="checkbox">
-                                            <span class="form-check-sign"></span>
-                                            I agree to the
-                                            <a href="#">terms and conditions</a>.
-                                        </label>
-                                    </div>
                                     <div class="card-footer text-center">
-                                        <a href="#pablo" class="btn btn-primary btn-round btn-lg">Get Started</a>
+                                        <input type="submit" class="btn btn-primary btn-round btn-lg" value="Get Started">
                                     </div>
                                 </form>
                             </div>
@@ -140,55 +143,40 @@
         <div class="container">
             <h2 class="title">Contact us</h2>
             <p class="description">Your suggestions and opinions are very important to us</p>
-            <div class="row">
-                <div class="col-lg-6 text-center ml-auto mr-auto col-md-8">
-                    <div class="input-group input-lg">
-                        <span class="input-group-addon">
-                            <i class="now-ui-icons users_circle-08"></i>
-                        </span>
-                        <input type="text" class="form-control" placeholder="First Name...">
-                    </div>
-                    <div class="input-group input-lg">
-                        <span class="input-group-addon">
-                            <i class="now-ui-icons ui-1_email-85"></i>
-                        </span>
-                        <input type="text" class="form-control" placeholder="Email...">
-                    </div>
-                    <div class="textarea-container">
-                        <textarea class="form-control" id="name" rows="4" cols="80" placeholder="Type a message..."></textarea>
-                    </div>
-                    <div class="send-button">
-                        <a href="#pablo" class="btn btn-primary btn-round btn-block btn-lg">Send Message</a>
+            <form class="form" method="post" action="/mail-us/#contact">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-lg-6 text-center ml-auto mr-auto col-md-8">
+                        {% for field in mail_us_form %}
+                            {% for error in field.errors %}
+                                <span style="color:red">{{ error }}</span>
+                            {% endfor %}
+                        {% endfor %}
+
+                        {% for field in mail_us_form %}
+                            {% if field.name != "message" %}
+                                <div class="input-group input-lg">
+                                    <span class="input-group-addon">
+                                        {% if field.name == "full_name" %}
+                                            <i class="now-ui-icons users_circle-08"></i>
+                                        {% elif field.name == "email" %}
+                                            <i class="now-ui-icons ui-1_email-85"></i>
+                                        {% endif %}
+                                    </span>
+                                    {{ field }}
+                                </div>
+                            {% else %}
+                                <div class="textarea-container">
+                                    {{ field }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                        <div class="send-button">
+                            <input type="submit" class="btn btn-primary btn-round btn-block btn-lg" value="Send Message">
+                        </div>
                     </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
     {% endblock sections %}
-    <!-- notice modal -->
-    <div class="modal fade" id="conditionsModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-notice">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
-                        <i class="now-ui-icons ui-1_simple-remove"></i>
-                    </button>
-                    <h5 class="modal-title" id="myModalLabel">How Do You Become an Affiliate?</h5>
-                </div>
-                <div class="modal-body">
-                    <div class="instruction">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <strong>1. Register</strong>
-                                <p class="description">The first step is to create an account at
-                                    <a href="http://www.creative-tim.com/">Creative Tim</a>. You can choose a social network or go for the classic version, whatever works best for you.</p>
-                            </div>
-                        </div>
-                    </div>
-                <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-info btn-round" data-dismiss="modal">Understood</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- end notice modal -->

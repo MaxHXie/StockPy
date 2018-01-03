@@ -37,9 +37,21 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
     'externalpage.apps.ExternalpageConfig',
     'internalpage.apps.InternalpageConfig',
+    'authentication.apps.AuthenticationConfig',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    )
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -101,13 +113,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+LOGIN_REDIRECT_URL = ''
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'CET'
 
 USE_I18N = True
 

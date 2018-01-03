@@ -6,7 +6,7 @@
     <link rel="apple-touch-icon" sizes="76x76" href="{% static 'externalpage/assets/img/apple-icon.png' %}">
     <link rel="icon" type="image/png" href="{% static 'externalpage/assets/img/favicon.png' %}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-    <title>Landing Page - Now UI Kit Pro by Creative Tim</title>
+    <title>{% block title %}StockPy{% endblock title %}</title>
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, shrink-to-fit=no' name='viewport' />
     <!--     Fonts and icons     -->
     <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700,200" rel="stylesheet" />
@@ -96,27 +96,38 @@
                             </div>
                         </div>
                     </div>
-                    <div class="modal-body">
-                        <form class="form" method="" action="">
+                    <form class="form" method="post" action="/login/">
+                        {% csrf_token %}
+                        <div class="modal-body">
                             <div class="card-content">
+                                {% for field in login_form %}
+                                    {% for error in field.errors %}
+                                        <span style="color:white;">{{ error }}</span>
+                                    {% endfor %}
+                                {% endfor %}
+
+                                {% if login_fail %}
+                                    <span style="color:white;">{{ login_fail }}</span>
+                                {% endif %}
+
+                                {% for field in login_form %}
                                 <div class="input-group form-group-no-border input-lg">
                                     <span class="input-group-addon">
-                                        <i class="now-ui-icons users_circle-08"></i>
+                                        {% if field.name == "username" %}
+                                            <i class="now-ui-icons ui-1_email-85"></i>
+                                        {% elif field.name == "password" %}
+                                            <i class="now-ui-icons ui-1_lock-circle-open"></i>
+                                        {% endif %}
                                     </span>
-                                    <input type="text" class="form-control" placeholder="First Name...">
+                                    {{ field }}
                                 </div>
-                                <div class="input-group form-group-no-border input-lg">
-                                    <span class="input-group-addon">
-                                        <i class="now-ui-icons ui-1_lock-circle-open"></i>
-                                    </span>
-                                    <input type="password" placeholder="Password..." class="form-control">
-                                </div>
+                                {% endfor %}
                             </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer text-center">
-                        <a href="#pablo" class="btn btn-neutral btn-round btn-lg btn-block">Log in</a>
-                    </div>
+                        </div>
+                        <div class="modal-footer text-center">
+                            <input type="submit" class="btn btn-neutral btn-round btn-lg btn-block" value="Log in">
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -185,5 +196,14 @@
 <!-- Control Center for Now Ui Kit: parallax effects, scripts for the example pages etc -->
 <script src="{% static 'externalpage/assets/js/now-ui-kit.js' %}?v=1.1.0" type="text/javascript"></script>
 {% block js %}{% endblock js %}
+
+{% if open_login_modal == "True" %}
+{{ open_login_modal }}
+<script type="text/javascript">
+    $(window).on('load',function(){
+        $('#loginModal').modal('show');
+    });
+</script>
+{% endif %}
 
 </html>
