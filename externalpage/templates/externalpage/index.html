@@ -153,6 +153,8 @@
                             {% endfor %}
                         {% endfor %}
 
+                        {% if mail_success %}<span style="color:green">{{ mail_success }}</span>{% endif %}
+
                         {% for field in mail_us_form %}
                             {% if field.name != "message" %}
                                 <div class="input-group input-lg">

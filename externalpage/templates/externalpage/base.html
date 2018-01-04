@@ -24,9 +24,7 @@
     <nav class="navbar navbar-expand-lg bg-white navbar-absolute navbar-transparent">
         <div class="container">
             <div class="navbar-translate">
-                <a class="navbar-brand" href="http://demos.creative-tim.com/now-ui-kit-pro/presentation.html" rel="tooltip" title="Designed by Invision. Coded by Creative Tim" data-placement="bottom" target="_blank">
-                    <strong>StockPy</strong>
-                </a>
+                <strong>StockPy</strong>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navigation" aria-controls="navigation-index" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-bar bar1"></span>
                     <span class="navbar-toggler-bar bar2"></span>
@@ -80,6 +78,40 @@
     {% block sections %}
     {% endblock sections %}
 
+    {% block general_notice_modal %}
+    <!-- Start general notice modal -->
+    <div class="modal fade" id="generalNoticeModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-notice">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        <i class="now-ui-icons ui-1_simple-remove"></i>
+                    </button>
+                    <h5 class="modal-title" id="myModalLabel">Check your mail</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="instruction">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <strong>Welcome onboard!</strong>
+                                <p class="description">We have successfully sent a activation link to your email, {{ email }}</p>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="picture">
+                                    <img src="{% static 'externalpage/assets/img/pricing1.jpg' %}" alt="Thumbnail Image" class="rounded img-raised">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-info btn-round" data-dismiss="modal">Dismiss</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end notice modal -->
+    {% endblock general_notice_modal %}
     {% block login-modal %}
     <!-- Login Modal -->
     <div class="modal fade modal-primary" id="loginModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -105,7 +137,9 @@
                                         <span style="color:white;">{{ error }}</span>
                                     {% endfor %}
                                 {% endfor %}
-
+                                {% for error in login_rest_api_error_list %}
+                                    <span style="color:white;">{{ error }}</span>
+                                {% endfor %}
                                 {% if login_fail %}
                                     <span style="color:white;">{{ login_fail }}</span>
                                 {% endif %}
@@ -134,6 +168,30 @@
     </div>
     <!--  End Modal -->
     {% endblock login-modal %}
+    {% block user_activation_modal %}
+    <!-- User activation modal -->
+    <div class="modal fade" id="userActivationModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header justify-content-center">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                        <i class="now-ui-icons ui-1_simple-remove"></i>
+                    </button>
+                    <h4 class="title title-up"></h4>
+                </div>
+                <div class="modal-body">
+                    <p>This account doesn't seem to be activated. Check your mail ({{ email }}) for an activationlink or click the button below to resend activation link to {{ email }}.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default">Resend actiavtion link</button>
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--  End Modal -->
+    {% endblock user_activation_modal %}
 
     {% block footer %}
     <footer class="footer footer-default ">
@@ -166,9 +224,7 @@
                 &copy;
                 <script>
                     document.write(new Date().getFullYear())
-                </script>, Designed by
-                <a href="http://www.invisionapp.com" target="_blank">Invision</a>. Coded by
-                <a href="https://www.creative-tim.com" target="_blank">Creative Tim</a>.
+                </script>, Stockpy by Max Xie
             </div>
         </div>
     </footer>
@@ -198,10 +254,25 @@
 {% block js %}{% endblock js %}
 
 {% if open_login_modal == "True" %}
-{{ open_login_modal }}
 <script type="text/javascript">
     $(window).on('load',function(){
         $('#loginModal').modal('show');
+    });
+</script>
+{% endif %}
+
+{% if open_user_activation_modal == "True" %}
+<script type="text/javascript">
+    $(window).on('load',function(){
+        $('#userActivationModal').modal('show');
+    });
+</script>
+{% endif %}
+
+{% if open_general_notice_modal == "True" %}
+<script type="text/javascript">
+    $(window).on('load',function(){
+        $('#generalNoticeModal').modal('show');
     });
 </script>
 {% endif %}
