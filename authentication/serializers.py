@@ -20,6 +20,12 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ('username', 'first_name', 'last_name', 'email', 'password')
 
+    def validate(self, data):
+        first_name = data['first_name']
+        last_name = data['last_name']
+        email = data['email']
+        password = data['password']
+
     def create(self, validated_data):
         user = super(UserSerializer, self).create(validated_data)
         user.set_password(validated_data['password'])
@@ -80,6 +86,7 @@ class UserDataSerializer(serializers.Serializer):
                                   })
 
     def validate(self, data):
+        username = data['username']
         return data
 
 class UserActivationKeySerializer(serializers.Serializer):
@@ -89,7 +96,7 @@ class UserActivationKeySerializer(serializers.Serializer):
     activation_key = serializers.CharField(required=True)
 
     def validate(self, data):
-        pass
+        activation_key = data['activation_key']
         return data
 
 class UserVerificationSerializer(serializers.Serializer):
@@ -104,4 +111,6 @@ class UserVerificationSerializer(serializers.Serializer):
     activation_key = serializers.CharField(required=True)
 
     def validate(self, data):
+        username = data['username']
+        activation_key = data['activation_key']
         return data

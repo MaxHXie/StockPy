@@ -101,10 +101,16 @@ def mail_us(request):
         context['mail_us_form'] = mail_us_form
         if mail_us_form.is_valid():
             full_name = mail_us_form.cleaned_data['full_name']
-            email = mail_us_form.cleaned_data['email']
+            sent_by = mail_us_form.cleaned_data['email']
             message = mail_us_form.cleaned_data['message']
+            title = "User question from external page contact form"
+            receiver = "root@localhost"
 
-            response = request_mail_us(request, full_name, email, message)
+            if sent_by != "":
+                message = ("From: " + sent_by) + message
+            sent_by = "root@localhost"
+
+            response = request_mail(request, title, full_name, receiver, sent_by, message)
             context['mail_success'] = "Your message have been sent"
     else:
         context['mail_us_form'] = MailUsForm()

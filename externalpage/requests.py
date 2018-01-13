@@ -59,15 +59,17 @@ def request_mail(request, title="", full_name="", receiver="", sent_by="", messa
     Output: True/False
     Operation: Send mail data to API. Send the mail from there.
     """
-    if request.session.get('api_token', False) : return False
 
-    SECRET_KEY = "60a2feab18e3574b02b25ca779002a02742ec4c44a8feb24b5aeb06f7c3ff6a9"
+    SECRET_KEY = "gf0324gf9wy23958fy23iyf983f032h4diuwebfk3lnbjs9cv3b4iiqhretwior4"
     MAC = hashlib.sha256((title+full_name+receiver+sent_by+message+SECRET_KEY).encode()).hexdigest()
+    
     #Sending mail should be its own app, start this when everything else is done.
-    r = requests.post('http://127.0.0.1:8000/api-auth/send-mail/',
+    r = requests.post('http://127.0.0.1:8000/mail/send/',
                         data = {
+                            'title': title,
                             'full_name': full_name,
-                            'email': email,
+                            'receiver': receiver,
+                            'sent_by': sent_by,
                             'message': message,
                             'MAC': MAC,
                         },

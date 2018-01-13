@@ -21,13 +21,13 @@ import hashlib
 @permission_classes((AllowAny, ))
 def login_user(request):
     """
-    Input: username, password, SECRET_API_MAC in a Request
+    Input: username, password, MAC in a Request
     Output: token_key in a Response Dictionary
     """
     if request.method == "POST":
         serializer = CredentialSerializer(data=request.data)
         if serializer.is_valid():
-            username = serializer.data['username']
+            username = serializer.validated_data['username']
             SECRET_KEY = "8905eae23fc1dacebe9e3915f652fef8791a98f5c1a67400e9d68c6c0e2c9e2e"
             MAC = hashlib.sha256((username+SECRET_KEY).encode()).hexdigest()
             if request.data['MAC'] != MAC:
@@ -44,7 +44,7 @@ def login_user(request):
 @permission_classes((AllowAny, ))
 def create_user(request):
     """
-    Input: username, first_name, last_name, password, email, SECRET_API_MAC in a Request
+    Input: username, first_name, last_name, password, email, MAC in a Request
     Output: username, first_name, last_name, email in a Response Dictionary
     """
     if request.method == "POST":
@@ -82,7 +82,7 @@ def check_logged_in(request):
 @permission_classes((AllowAny, ))
 def get_activation_key(request):
     """
-    Input: username, SECRET_API_MAC in a Request
+    Input: username, MAC in a Request
     Output: username, activation_key, key_expires in a Response Dictionary
     """
     if request.method == 'POST':
@@ -102,7 +102,7 @@ def get_activation_key(request):
 @permission_classes((AllowAny, ))
 def get_user_with_activation_key(request):
     """
-    Input: activation_key, SECRET_API_MAC in a Request
+    Input: activation_key, MAC in a Request
     Output: activation_key, username, user_id in a Response Dictionary
     """
     if request.method == "POST":
@@ -121,7 +121,7 @@ def get_user_with_activation_key(request):
 @permission_classes((AllowAny, ))
 def verify_user(request):
     """
-    Input: activation_key, SECRET_API_MAC in a Request
+    Input: activation_key, MAC in a Request
     Output: activation_key, username, user_id in a Response Dictionary
     """
     if request.method == "POST":
