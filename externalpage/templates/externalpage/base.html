@@ -51,19 +51,19 @@
                         </a>
                     </li>
                     <!-- <li class="nav-item">
-					<a class="nav-link" rel="tooltip" title="Follow us on Twitter" data-placement="bottom" href="https://twitter.com/CreativeTim" target="_blank">
+					<a class="nav-link" rel="tooltip" title="Follow us on Twitter" data-placement="bottom" href="https://twitter.com/" target="_blank">
 						<i class="fa fa-twitter"></i>
 						<p class="hidden-lg-up">Twitter</p>
 					</a>
 				</li>
 				<li class="nav-item">
-					<a class="nav-link" rel="tooltip" title="Like us on Facebook" data-placement="bottom" href="https://www.facebook.com/CreativeTim" target="_blank">
+					<a class="nav-link" rel="tooltip" title="Like us on Facebook" data-placement="bottom" href="https://www.facebook.com/" target="_blank">
 						<i class="fa fa-facebook-square"></i>
 						<p class="hidden-lg-up">Facebook</p>
 					</a>
 				</li>
 				<li class="nav-item">
-					<a class="nav-link" rel="tooltip" title="Follow us on Instagram" data-placement="bottom" href="https://www.instagram.com/CreativeTimOfficial" target="_blank">
+					<a class="nav-link" rel="tooltip" title="Follow us on Instagram" data-placement="bottom" href="https://www.instagram.com/" target="_blank">
 						<i class="fa fa-instagram"></i>
 						<p class="hidden-lg-up">Instagram</p>
 					</a>
@@ -87,20 +87,28 @@
                     <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
                         <i class="now-ui-icons ui-1_simple-remove"></i>
                     </button>
-                    <h5 class="modal-title" id="myModalLabel">Check your mail</h5>
+                    {% if general_notice_modal_title %}
+                    <h5 class="modal-title" id="myModalLabel">{{ general_notice_modal_title }}</h5>
+                    {% endif %}
                 </div>
                 <div class="modal-body">
                     <div class="instruction">
                         <div class="row">
                             <div class="col-md-8">
-                                <strong>Welcome onboard!</strong>
-                                <p class="description">We have successfully sent a activation link to your email, {{ email }}</p>
+                                {% if general_notice_modal_sub_title %}
+                                <strong>{{ general_notice_modal_sub_title }}</strong>
+                                {% endif %}
+                                {% if general_notice_modal_description %}
+                                <p class="description">{{ general_notice_modal_description }}</p>
+                                {% endif %}
                             </div>
+                            {% if general_notice_modal_image %}
                             <div class="col-md-4">
                                 <div class="picture">
-                                    <img src="{% static 'externalpage/assets/img/pricing1.jpg' %}" alt="Thumbnail Image" class="rounded img-raised">
+                                    <img src="{% static general_notice_modal_image %}" alt="Thumbnail Image" class="rounded img-raised">
                                 </div>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -142,6 +150,9 @@
                                 {% endfor %}
                                 {% if login_fail %}
                                     <span style="color:white;">{{ login_fail }}</span>
+                                {% endif %}
+                                {% if success_message %}
+                                    <span style="color:green;"><strong>{{ success_message }}</strong></span>
                                 {% endif %}
 
                                 {% for field in login_form %}

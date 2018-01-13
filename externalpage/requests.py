@@ -1,62 +1,94 @@
 import requests
-import pprint
+import hashlib
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 from rest_framework.authtoken.models import Token
 
 def request_get_token_key(request, email, password):
+    """
+        Input: request, email, password
+        Output: success(bool), key(string)
+        Operation: Send data to login API. Receive user token upon success.
+    """
     if request.session.get('api_token', False) : return False
 
-    SECRET_API_KEY = "8905eae23fc1dacebe9e3915f652fef8791a98f5c1a67400e9d68c6c0e2c9e2e"
+    SECRET_KEY = "8905eae23fc1dacebe9e3915f652fef8791a98f5c1a67400e9d68c6c0e2c9e2e"
+    MAC = hashlib.sha256((email+SECRET_KEY).encode()).hexdigest()
     r = requests.post('http://127.0.0.1:8000/api-auth/login-user/',
                          data = {
                             'username': email,
                             'password': password,
-                            'SECRET_API_KEY': SECRET_API_KEY,
+                            'MAC': MAC,
                          },
                          verify=True,
                      )
 
+    return r
     response = r.json()
-    if (r.status_code == 200 or r.status_code == 201) and response['key'] is not None:
+
+    if r.status_code == 200 and response['key'] is not None:
         return {"success": True, "key": response['key']}
     else:
         return {"success": False, "errors": response}
 
 def request_register(request, first_name, last_name, email, password):
+    """
+    Input: request, first_name, last_name, email, password
+    Output: True/False
+    Operation: Send user credentials to register API. Returns True/False upon success/failure
+    """
     if request.session.get('api_token', False) : return False
 
-    SECRET_API_KEY = "693d4f1c86fab27268376bd9b25102ecd18e33c202cf184911153ccaa1e5cdd1"
+    SECRET_KEY = "693d4f1c86fab27268376bd9b25102ecd18e33c202cf184911153ccaa1e5cdd1"
+    MAC = hashlib.sha256((first_name+last_name+email+SECRET_KEY).encode()).hexdigest()
     r = requests.post('http://127.0.0.1:8000/api-auth/create-user/',
                         data = {
                             'username': email,
                             'first_name': first_name,
                             'last_name': last_name,
                             'email': email, 'password': password,
-                            'SECRET_API_KEY': SECRET_API_KEY,
+                            'MAC': MAC,
                         },
                         verify=True,
                      )
-    if r.status_code == 200 or r.status_code == 201:
-        return True
-    else:
-        return False
+    return r
 
-def request_mail_us(request, full_name, email, message):
+def request_mail(request, title="", full_name="", receiver="", sent_by="", message=""):
+    """
+    Input: request, title, full_name, receiver, sent_by, message
+    Output: True/False
+    Operation: Send mail data to API. Send the mail from there.
+    """
     if request.session.get('api_token', False) : return False
 
-    SECRET_API_KEY = "60a2feab18e3574b02b25ca779002a02742ec4c44a8feb24b5aeb06f7c3ff6a9"
+    SECRET_KEY = "60a2feab18e3574b02b25ca779002a02742ec4c44a8feb24b5aeb06f7c3ff6a9"
+    MAC = hashlib.sha256((title+full_name+receiver+sent_by+message+SECRET_KEY).encode()).hexdigest()
     #Sending mail should be its own app, start this when everything else is done.
     r = requests.post('http://127.0.0.1:8000/api-auth/send-mail/',
                         data = {
                             'full_name': full_name,
                             'email': email,
                             'message': message,
-                            'SECRET_API_KEY': SECRET_API_KEY,
+                            'MAC': MAC,
                         },
                         verify=True,
                      )
-    if r.status_code == 200 or status_code == 201:
-        return True
-    else:
-        return False
+    return r
+
+def request_verify_user(request, username, activation_key):
+    """
+    Input: request, username, activation_key
+    Output: True/False
+    Operation: Send data to user verification API. Verify the user from there
+    """
+    SECRET_KEY = "9bf328ofb2q8543f9nrj9843nc943nrh1o3gt321o847r8fo2p3lrqi43r78fgq3"
+    MAC = hashlib.sha256((username+activation_key+SECRET_KEY).encode()).hexdigest()
+    r = requests.post('http://127.0.0.1:8000/api-auth/verify-user/',
+                        data = {
+                            'username': username,
+                            'activation_key': activation_key,
+                            'MAC': MAC,
+                        },
+                        verify=True,
+                     )
+    return r

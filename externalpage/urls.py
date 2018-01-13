@@ -7,4 +7,5 @@ urlpatterns = [
     path('login/', views.login, name='login'),
     path('register/', views.register, name='register'),
     path('mail-us/', views.mail_us, name="mail_us"),
+    path('verify-user/<str:username>/<str:activation_key>/', views.verify_user, name="verify_user")
 ]
