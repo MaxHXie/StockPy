@@ -17,32 +17,34 @@ import hashlib
 @permission_classes((AllowAny, ))
 def send_mail(request):
     """
-    Input: request, title, full_name, receiver, sent_by, message, MAC in a Request
-    Output: request, title, full_name, receiver, sent_by, message in a Response Dictionary
+    Input: request, title, receiver, sent_by, message, MAC in a Request
+    Output: request, title, receiver, sent_by, message in a Response Dictionary
     Operation: Send mail with the input contents
     """
     if request.method == "POST":
         serializer = SendMailSerializer(data=request.data)
         if serializer.is_valid():
             title = serializer.validated_data['title']
-            full_name = serializer.validated_data['full_name']
             receiver = serializer.validated_data['receiver']
             sent_by = serializer.validated_data['sent_by']
             message = serializer.validated_data['message']
 
             SECRET_KEY = "gf0324gf9wy23958fy23iyf983f032h4diuwebfk3lnbjs9cv3b4iiqhretwior4"
-            MAC = hashlib.sha256((title+full_name+receiver+sent_by+message+SECRET_KEY).encode()).hexdigest()
-            
+            MAC = hashlib.sha256((title+receiver+sent_by+message+SECRET_KEY).encode()).hexdigest()
+
             if request.data['MAC'] != MAC:
                 messages.error(request, "invalid_mac")
                 return Response(status=401)
 
             else:
-                if full_name != "":
-                    title += " from " + full_name
                 if not isinstance(receiver, Iterable):
                     receiver = [receiver]
+                print(title)
+                print(message)
+                print(sent_by)
+                print(receiver)
                 send_mail(subject=title, message=message, from_email=sent_by, recipient_list=receiver)
+                return Response(serializer.errors, status=200)
 
         return Response(serializer.errors, status=400)
 

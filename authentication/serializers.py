@@ -1,4 +1,3 @@
-from django.contrib.auth.hashers import PBKDF2PasswordHasher
 from django.utils.crypto import get_random_string
 from rest_framework import serializers
 from django.contrib.auth import authenticate
@@ -6,7 +5,7 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from .models import Profile
 import datetime
-
+import hashlib
 class UserSerializer(serializers.ModelSerializer):
     """
         User handling serializer. Creating/Updating users here
@@ -25,6 +24,7 @@ class UserSerializer(serializers.ModelSerializer):
         last_name = data['last_name']
         email = data['email']
         password = data['password']
+        return data
 
     def create(self, validated_data):
         user = super(UserSerializer, self).create(validated_data)
@@ -35,8 +35,7 @@ class UserSerializer(serializers.ModelSerializer):
         profile = Profile()
         profile.user = user
         #You have to generate your own activation key here
-        SHA256 = PBKDF2PasswordHasher().encode(User.objects.make_random_password(length=50, allowed_chars="1234567890!¤%&/()=?@£$€:;^*^½§"), salt=get_random_string(length=32))
-        profile.activation_key = SHA256.split("$")[3]
+        profile.activation_key = hashlib.sha256(get_random_string(length=1024).encode()).hexdigest()
         profile.key_expires = datetime.datetime.strftime(datetime.datetime.now() + datetime.timedelta(days=2), "%Y-%m-%d %H:%M:%S")
         profile.save()
         return user
@@ -57,6 +56,7 @@ class CredentialSerializer(serializers.Serializer):
     def validate(self, data):
         username = data['username']
         password = data['password']
+        return data
 
         if username and password:
             user = authenticate(username=username, password=password)

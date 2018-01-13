@@ -106,11 +106,13 @@ def mail_us(request):
             title = "User question from external page contact form"
             receiver = "root@localhost"
 
+            if full_name != "":
+                message += "    Regards " + full_name
             if sent_by != "":
                 message = ("From: " + sent_by) + message
             sent_by = "root@localhost"
 
-            response = request_mail(request, title, full_name, receiver, sent_by, message)
+            response = request_mail(request, title, receiver, sent_by, message)
             context['mail_success'] = "Your message have been sent"
     else:
         context['mail_us_form'] = MailUsForm()

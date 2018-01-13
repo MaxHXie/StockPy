@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import authentication, permissions, status
 from rest_framework.authentication import TokenAuthentication
+from .requests import request_mail
 from .models import Profile
 import hashlib
 
@@ -60,6 +61,16 @@ def create_user(request):
                 return Response(status=407)
             else:
                 serializer.save()
+
+                activation_key = User.objects.get(username=email).profile.activation_key
+                title = "Welcome onboard to StockPy, " + first_name + " " + last_name
+                receiver = email
+                sent_by = "localhost@root"
+                message = "Welcome to StockPy. Here is your activation link. https://stockpy.io/" + email + "/" + activation_key + "/" + "    Regards " + "Max Xie"
+                response = request_mail(request, title, receiver, sent_by, message)
+                if response.status_code == 200:
+                        #This means both the registration and the email succeeded. But I am going to do something on this later
+                        pass
                 return Response(serializer.data, status=201)
         else:
             messages.error(request, 'registration_fail')
