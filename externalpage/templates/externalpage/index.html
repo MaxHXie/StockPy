@@ -153,7 +153,11 @@
                             {% endfor %}
                         {% endfor %}
 
-                        {% if mail_success %}<span style="color:green">{{ mail_success }}</span>{% endif %}
+                        {% if mail_success %}
+                        <span style="color:green">{{ mail_success }}</span>
+                        {% elif mail_failure %}
+                        <span style="color:red">{{ mail_failure }}</span>
+                        {% endif %}
 
                         {% for field in mail_us_form %}
                             {% if field.name != "message" %}

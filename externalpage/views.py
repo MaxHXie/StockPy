@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
-from .forms import LoginForm, RegisterForm, MailUsForm
+from .forms import LoginForm, RegisterForm, MailUsForm, ForgottenPasswordForm
 from .requests import request_get_token_key, request_register, request_mail, request_verify_user
 from .functions import get_api_errors, token_authentication, reset_context
 
@@ -16,6 +16,8 @@ def login(request):
     context["open_login_modal"] = "True"
     context["open_general_notice_modal"] = "False"
     context["open_user_activation_modal"] = "False"
+    context["forgotten_password_modal"] = "False"
+    context['login_rest_api_error_list'] = [""]
     context["mail_success"] = ""
 
     if request.method == 'POST':
@@ -29,23 +31,16 @@ def login(request):
             #Send and receive data to the API
             response = request_get_token_key(request, email, password)
 
-            if response.status_code == 200:
-                if response.json()['key'] is not None:
-                    token_authentication(request, response.json['key'])
-
-            elif response.status_code == 407 or response.status_code == 401:
-                context['login_rest_api_error_list'] = ['There was a connection error, please try again']
-            else:
-                login_rest_api_error_list = get_api_errors(response['errors'])
-                context['login_rest_api_error_list'] = login_rest_api_error_list
-
-            if response['success'] == True:
+            if response['error'] == '' and response['key'] != "":
                 token_authentication(request, response['key'])
-            elif response['success'] == False:
-                login_rest_api_error_list = get_api_errors(response['errors'])
-                context['login_rest_api_error_list'] = login_rest_api_error_list
-            #Insert error messages here
-
+            else:
+                if response["modal"] == "account_activation":
+                    context["open_login_modal"] = "False"
+                    context["open_general_notice_modal"] = "True"
+                    context["general_notice_modal_title"] = "Your account does not seem to be verified"
+                    context["general_notice_modal_description"] = "We have tried to send a verification link to: " + email + ". Do you want us to resend?"
+                else:
+                    context['login_rest_api_error_list'] = [response['error']]
     else:
         context['login_form'] = LoginForm()
 
@@ -55,6 +50,7 @@ def register(request):
     context["open_login_modal"] = "False"
     context["open_general_notice_modal"] = "False"
     context["open_user_activation_modal"] = "False"
+    context["forgotten_password_modal"] = "False"
     context["mail_success"] = ""
     context["login_rest_api_error_list"] = ""
 
@@ -72,19 +68,15 @@ def register(request):
             context['email'] = email
 
             response = request_register(request, first_name, last_name, email, password)
-            if response.status_code == 201:
+
+            if response['error'] == '':
                 context['register_fail'] = None
                 context['open_general_notice_modal'] = "True"
                 context['general_notice_modal_title'] = "Check your mail"
                 context['general_notice_modal_sub_title'] = "Welcome onboard!"
                 context['general_notice_modal_description'] = "We have successfully sent a activation link to your email, " + email
-            elif response.status_code == 407 or response.status_code == 401:
-                print(response.status_code)
-                context['register_fail'] = 'There was a connection error, please try again'
-            elif response.status_code == 406:
-                context['register_fail'] = 'That email is already taken'
             else:
-                context['register_fail'] = 'An error occured, please try again.'
+                context['register_fail'] = response['error'].replace("username", "email")
     else:
         context['register_form'] = RegisterForm()
 
@@ -94,7 +86,9 @@ def mail_us(request):
     context["open_login_modal"] = "False"
     context["open_general_notice_modal"] = "False"
     context["open_user_activation_modal"] = "False"
+    context["forgotten_password_modal"] = "False"
     context["login_rest_api_error_list"] = ""
+    context["mail_success"] = ""
 
     if request.method == "POST":
         mail_us_form = MailUsForm(request.POST)
@@ -113,7 +107,12 @@ def mail_us(request):
             sent_by = "root@localhost"
 
             response = request_mail(request, title, receiver, sent_by, message)
-            context['mail_success'] = "Your message have been sent"
+            if response['error'] == "":
+                context['mail_success'] = "Your message have been sent"
+                context['mail_failure'] = ""
+            else:
+                context['mail_failure'] = response['error']
+                context['mail_success'] = ""
     else:
         context['mail_us_form'] = MailUsForm()
 
@@ -123,16 +122,44 @@ def verify_user(request, username, activation_key):
     context["open_login_modal"] = "False"
     context["open_general_notice_modal"] = "False"
     context["open_user_activation_modal"] = "False"
+    context["forgotten_password_modal"] = "False"
     context["mail_success"] = ""
 
     response = request_verify_user(request, username, activation_key)
 
-    if response.status_code == 200:
+    if response['error'] == '':
         context["open_login_modal"] = "True"
         context["success_message"] = "Your account has been verified"
     else:
         context["open_general_notice_modal"] = "True"
         context["general_notice_modal_title"] = "Verification failed"
         context["general_notice_modal_description"] = "We tried to send the verificaiton link to your email: " + username + ". Do you want us to resend?"
+
+    return render(request, 'externalpage/index.html', context)
+
+def forgotten_password(request):
+    #Forgotten password you shits, continue here later
+    context["open_login_modal"] = "False"
+    context["open_general_notice_modal"] = "False"
+    context["open_user_activation_modal"] = "False"
+    context["mail_success"] = ""
+    context["open_forgotten_password_modal"] = "True"
+
+    if request.method == "POST":
+        forgotten_password_form = ForgottenPasswordForm(request.POST)
+        context['forgotten_password_form'] = forgotten_password_form
+        if forgotten_password_form.is_valid():
+            email = forgotten_password_form.cleaned_data['email']
+            request_forgotten_password(request, email)
+            if response.status_code == 200:
+                context["open_forgotten_password_modal"] = "False"
+                context["open_general_notice_modal"] = "True"
+                context["general_notice_modal_title"] = "Password reset link sent!"
+                context["general_notice_modal_description"] = "We have sent a password reset link to " + email
+                context["general_notice_button_link"] = "/login/"
+            else:
+                pass
+    else:
+        context['forgotten_password_form'] = ForgottenPasswordForm()
 
     return render(request, 'externalpage/index.html', context)

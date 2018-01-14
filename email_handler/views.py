@@ -18,7 +18,7 @@ import hashlib
 def send_mail(request):
     """
     Input: request, title, receiver, sent_by, message, MAC in a Request
-    Output: request, title, receiver, sent_by, message in a Response Dictionary
+    Output: JsonResponse containing the error
     Operation: Send mail with the input contents
     """
     if request.method == "POST":
@@ -33,20 +33,13 @@ def send_mail(request):
             MAC = hashlib.sha256((title+receiver+sent_by+message+SECRET_KEY).encode()).hexdigest()
 
             if request.data['MAC'] != MAC:
-                messages.error(request, "invalid_mac")
-                return Response(status=401)
+                return JsonResponse({'error': 'invalid_mac'})
 
             else:
                 if not isinstance(receiver, Iterable):
                     receiver = [receiver]
-                print(title)
-                print(message)
-                print(sent_by)
-                print(receiver)
                 send_mail(subject=title, message=message, from_email=sent_by, recipient_list=receiver)
-                return Response(serializer.errors, status=200)
+                return JsonResponse({'error': ''})
 
-        return Response(serializer.errors, status=400)
-
-    messages.error(request, "post_required")
-    return Response(status=401)
+        return JsonResponse({'error': list(serializer.errors.values())[0][0]})
+    return JsonResponse({'error': 'post_required'})

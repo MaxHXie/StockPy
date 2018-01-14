@@ -272,3 +272,30 @@ class MailUsForm(forms.Form):
         if message == "":
             raise forms.ValidationError("You have to enter a message. ")
         return message
+
+class ForgottenPasswordForm(forms.Form):
+    email = forms.CharField(
+        max_length = 254,
+        required = True,
+        label = "Email",
+        widget = forms.EmailInput(
+            attrs={
+                "type":"text",
+                "id":"email",
+                "name":"email",
+                "class":"form-control",
+                "placeholder":"Email...",
+            }
+        )
+    )
+
+    class Meta:
+        fields = ['email']
+
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if email == "":
+            raise forms.ValidationError("You have to enter an email.")
+        elif match_email(email) == None:
+            raise forms.ValidationError("Enter a valid email")
+        return email

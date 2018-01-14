@@ -113,7 +113,7 @@
                     </div>
                 </div>
                 <div class="modal-footer justify-content-center">
-                    <button type="button" class="btn btn-info btn-round" data-dismiss="modal">Dismiss</button>
+                    <button type="button" onclick="location.href='{{ general_notice_button_link }}';" class="btn btn-info btn-round" data-dismiss="modal">Dismiss</button>
                 </div>
             </div>
         </div>
@@ -146,7 +146,7 @@
                                     {% endfor %}
                                 {% endfor %}
                                 {% for error in login_rest_api_error_list %}
-                                    <span style="color:white;">{{ error }}</span>
+                                    <div style="color:white;">{{ error }}</div>
                                 {% endfor %}
                                 {% if login_fail %}
                                     <span style="color:white;">{{ login_fail }}</span>
@@ -167,6 +167,7 @@
                                     {{ field }}
                                 </div>
                                 {% endfor %}
+                                <span color="black"><a href="/forgotten-password/">Forgotten password?</a></span>
                             </div>
                         </div>
                         <div class="modal-footer text-center">
@@ -203,7 +204,53 @@
     </div>
     <!--  End Modal -->
     {% endblock user_activation_modal %}
+    {% block forgotten_password_modal %}
+    <!-- Forgotten Password Modal -->
+    <div class="modal fade modal-primary" id="forgottenPasswordModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-login">
+            <div class="modal-content">
+                <div class="card card-login card-plain">
+                    <h4 class="card-title text-center">Reset Password</h4>
+                    <div class="modal-header justify-content-center">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                            <i class="now-ui-icons ui-1_simple-remove"></i>
+                        </button>
+                    </div>
+                    <form class="form" method="post" action="/forgotten-password/">
+                        {% csrf_token %}
+                        <div class="modal-body">
+                            <div class="card-content">
+                                {% for field in forgotten_password_form %}
+                                    {% for error in field.errors %}
+                                        <span style="color:white;">{{ error }}</span>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% if forgotten_password_success_message %}
+                                    <span style="color:green;"><strong>{{ forgotten_password_success_message }}</strong></span>
+                                {% endif %}
 
+                                {% for field in forgotten_password_form %}
+                                <div class="input-group form-group-no-border input-lg">
+                                    <span class="input-group-addon">
+                                        {% if field.name == "email" %}
+                                            <i class="now-ui-icons ui-1_email-85"></i>
+                                        {% endif %}
+                                    </span>
+                                    {{ field }}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="modal-footer text-center">
+                            <input type="submit" class="btn btn-neutral btn-round btn-lg btn-block" value="Send email">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--  End Forgotten Password Modal -->
+    {% endblock forgotten_password_modal %}
     {% block footer %}
     <footer class="footer footer-default ">
         <div class="container">
@@ -284,6 +331,14 @@
 <script type="text/javascript">
     $(window).on('load',function(){
         $('#generalNoticeModal').modal('show');
+    });
+</script>
+{% endif %}
+
+{% if open_forgotten_password_modal == "True" %}
+<script type="text/javascript">
+    $(window).on('load',function(){
+        $('#forgottenPasswordModal').modal('show');
     });
 </script>
 {% endif %}

@@ -3,6 +3,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import User
 from .models import Profile
 import datetime
 import hashlib
@@ -56,24 +57,31 @@ class CredentialSerializer(serializers.Serializer):
     def validate(self, data):
         username = data['username']
         password = data['password']
-        return data
 
         if username and password:
+            not_active = False
+            try:
+                user = User.objects.get(username=username)
+                if not user.is_active:
+                    not_active = True
+            except:
+                pass
+                
+            if not_active == True:
+                raise serializers.ValidationError('user_not_active')
+
             user = authenticate(username=username, password=password)
             if not user:
                 raise serializers.ValidationError('invalid_credentials')
-            else:
-                if not user.is_active:
-                    raise serializers.ValidationError('user_not_active')
         else:
             raise serializers.ValidationError('empty_required_fields')
         return data
 
     def create(self, validated_data):
-        pass
+        return validated_data
 
     def update(self, instance, validated_data):
-        pass
+        return validated_data
 
 class UserDataSerializer(serializers.Serializer):
     """
@@ -112,5 +120,10 @@ class UserVerificationSerializer(serializers.Serializer):
 
     def validate(self, data):
         username = data['username']
+        try:
+            user = User.objects.get(username=username)
+        except:
+            raise serializers.ValidationError('user_not_exist')
+
         activation_key = data['activation_key']
         return data

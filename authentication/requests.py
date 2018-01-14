@@ -25,4 +25,15 @@ def request_mail(request, title="", receiver="", sent_by="", message=""):
                         },
                         verify=True,
                      )
-    return r
+
+    response = r.json()
+    returnDict = {"error": ""}
+    error = response['error']
+
+    if error == '':
+        returnDict['error'] = ""
+    elif error == 'invalid_mac' or error == 'post_required':
+        returnDict['error'] = 'There was a connection error, please try again'
+    else:
+        returnDict['error'] = error
+    return returnDict

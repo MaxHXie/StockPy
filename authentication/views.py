@@ -23,7 +23,7 @@ import hashlib
 def login_user(request):
     """
     Input: username, password, MAC in a Request
-    Output: token_key in a Response Dictionary
+    Output: token_key in a JsonResponse Dictionary
     """
     if request.method == "POST":
         serializer = CredentialSerializer(data=request.data)
@@ -32,21 +32,19 @@ def login_user(request):
             SECRET_KEY = "8905eae23fc1dacebe9e3915f652fef8791a98f5c1a67400e9d68c6c0e2c9e2e"
             MAC = hashlib.sha256((username+SECRET_KEY).encode()).hexdigest()
             if request.data['MAC'] != MAC:
-                messages.error(request, 'invalid_mac')
-                return Response(status=407)
+                return JsonResponse({'error': 'invalid_mac'})
             serializer.save()
             token, is_created = Token.objects.get_or_create(user=User.objects.get(username=serializer.data['username']))
-            return Response({'key': token.key}, status=200)
-        return Response(serializer.errors, status=406)
-    messages.error(request, "post_required")
-    return Response(status = 401)
+            return JsonResponse({'error': '', 'key': token.key})
+        return JsonResponse({'error': list(serializer.errors.values())[0][0]})
+    return JsonResponse({'error':'post_required'})
 
 @api_view(['POST'])
 @permission_classes((AllowAny, ))
 def create_user(request):
     """
     Input: username, first_name, last_name, password, email, MAC in a Request
-    Output: username, first_name, last_name, email in a Response Dictionary
+    Output: username, first_name, last_name, email in a JsonResponse Dictionary
     """
     if request.method == "POST":
         serializer = UserSerializer(data=request.data)
@@ -58,7 +56,7 @@ def create_user(request):
             MAC = hashlib.sha256((first_name+last_name+email+SECRET_KEY).encode()).hexdigest()
             if request.data['MAC'] != MAC:
                 messages.error(request, 'invalid_mac')
-                return Response(status=407)
+                return JsonResponse({'error': 'invalid_mac'})
             else:
                 serializer.save()
 
@@ -66,35 +64,32 @@ def create_user(request):
                 title = "Welcome onboard to StockPy, " + first_name + " " + last_name
                 receiver = email
                 sent_by = "localhost@root"
-                message = "Welcome to StockPy. Here is your activation link. https://stockpy.io/" + email + "/" + activation_key + "/" + "    Regards " + "Max Xie"
+                message = "Welcome to StockPy. Here is your activation link. https://stockpy.io/" + "/verify-user/" + email + "/" + activation_key + "/" + "    Regards " + "Max Xie"
                 response = request_mail(request, title, receiver, sent_by, message)
-                if response.status_code == 200:
-                        #This means both the registration and the email succeeded. But I am going to do something on this later
-                        pass
-                return Response(serializer.data, status=201)
+                if response['error'] == "":
+                    return JsonResponse({'error': '', 'response': serializer.data})
+                else:
+                    return JsonResponse({'error': 'account_created_no_email'})
         else:
-            messages.error(request, 'registration_fail')
-            return Response(serializer.errors, status=406)
-    messages.error(request, "post_required")
-    return Response(status = 401)
+            return JsonResponse({'error': list(serializer.errors.values())[0][0]})
+    return JsonResponse({'error': 'post_required'})
 
 @api_view(['GET'])
 @authentication_classes((TokenAuthentication, ))
 def check_logged_in(request):
     if request.method == 'GET':
         if request.user.is_staff:
-            return Response({'key': 'value'}, status=200)
+            return JsonResponse({'error': '', 'key': 'value'})
         else:
-            return Response({'login_required': 'true'}, status=401)
-    messages.error(request, "get_required")
-    return Response({"error": "get_required"}, status = 401)
+            return JsonResponse({'error': '', 'login_required': 'True'})
+    return JsonResponse({"error": "get_required"})
 
 @api_view(['POST'])
 @permission_classes((AllowAny, ))
 def get_activation_key(request):
     """
     Input: username, MAC in a Request
-    Output: username, activation_key, key_expires in a Response Dictionary
+    Output: username, activation_key, key_expires in a JsonResponse Dictionary
     """
     if request.method == 'POST':
         serializer = UserDataSerializer(data=request.data)
@@ -104,17 +99,16 @@ def get_activation_key(request):
             activation_key = user.profile.activation_key
             key_expires = user.profile.key_expires
             content = {"username": username, "activation_key": activation_key, "key_expires": key_expires}
-            return Response(content, status=200)
-        return Response(serializer.errors, status=400)
-    messages.error(request, "post_required")
-    return Response(status=401)
+            return JsonResponse({'error': '', 'response': content})
+        return JsonResponse({'error': list(serializer.errors.values())[0][0]})
+    return JsonResponse({'error': 'post_required'})
 
 @api_view(['POST'])
 @permission_classes((AllowAny, ))
 def get_user_with_activation_key(request):
     """
     Input: activation_key, MAC in a Request
-    Output: activation_key, username, user_id in a Response Dictionary
+    Output: activation_key, username, user_id in a JsonResponse Dictionary
     """
     if request.method == "POST":
         serializer = UserActivationKeySerializer(data=request.data)
@@ -123,38 +117,35 @@ def get_user_with_activation_key(request):
             user_id = Profile.objects.get(activation_key=activation_key).user_id
             username = User.objects.get(pk=user_id).username
             content = {"user_id": user_id, "username": username, "activation_key": activation_key}
-            return Response(content, status=200)
-        return Response(serializer.errors, status=400)
-    messages.error(request, "post_required")
-    return Response(status=401)
+            return JsonResponse({'error': '', 'response': content})
+        return JsonResponse({'error': list(serializer.errors.values())[0][0]})
+    return JsonResponse({'error': 'post_required'})
 
 @api_view(['POST'])
 @permission_classes((AllowAny, ))
 def verify_user(request):
     """
     Input: activation_key, MAC in a Request
-    Output: activation_key, username, user_id in a Response Dictionary
+    Output: activation_key, username, user_id in a JsonResponse Dictionary
     """
     if request.method == "POST":
         serializer = UserVerificationSerializer(data=request.data)
-        if serializer.is_valid(): #Validate input data
+        if serializer.is_valid():
             username = serializer.validated_data['username']
             activation_key = serializer.validated_data['activation_key']
             SECRET_KEY = "9bf328ofb2q8543f9nrj9843nc943nrh1o3gt321o847r8fo2p3lrqi43r78fgq3"
             MAC = hashlib.sha256((username+activation_key+SECRET_KEY).encode()).hexdigest()
             if MAC != request.data['MAC']:
-                messages.error(request, "invalid_mac")
-                return Response(status=401)
+                return JsonResponse({'error': 'invalid_mac'})
             user = User.objects.get(username=username)
             if user.profile.activation_key == activation_key:
                 user.is_active = True
                 user.save()
-                return Response({"success": "True"}, status=200)
+                return JsonResponse({"error": "", "response": "True"})
             else:
-                return Response({"error": "invalid_activation_key"}, status=405)
-        return Response(serializer.errors, status=400)
-    messages.error(request, "post_required")
-    return Response(status=401)
+                return JsonResponse({"error": "invalid_activation_key"})
+        return JsonResponse({"error": list(serializer.errors.values())[0][0]})
+    return JsonResponse({"error": "post_required"})
 
 
 def logout_user(request):
@@ -163,4 +154,4 @@ def logout_user(request):
 def redirect_to_home(request):
     #You should really not have any realtionsships with other apps
     #This is however the only exception
-    return HttpResponseRedirect(reverse("externalpage:index"))
+    return HttpJsonResponseRedirect(reverse("externalpage:index"))
