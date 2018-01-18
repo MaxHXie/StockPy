@@ -1,0 +1,11 @@
+{% autoescape off %}
+Welcome aboard to StockPy.
+
+To verify your account and get started, click the link below:
+
+{% url 'authentication:verify_user' %}/{{ email }}/{{ activation_key }}
+
+Regards
+
+StockPy Team
+{% endautoescape %}

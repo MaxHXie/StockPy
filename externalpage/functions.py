@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from .forms import LoginForm, RegisterForm, MailUsForm
 from django.contrib.auth import login
+import hashlib
 import re
 
 def reset_context_fields(fields, context):
@@ -55,7 +56,7 @@ def soft_reset_context(context):
 
     context = reset_context_fields(fields, context)
     return context
-    
+
 def get_api_errors(response):
     """Takes a REST API response, find and translate all
        errors according to API documentation. Return error list."""
@@ -87,3 +88,7 @@ def token_authentication(request, key):
         return False
     except Token.DoesNotExist:
         return False
+
+def generate_mac(SECRET_KEY, *args):
+    generated_mac = hashlib.sha256(("".join(args)+SECRET_KEY).encode()).hexdigest()
+    return generated_mac

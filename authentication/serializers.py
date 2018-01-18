@@ -66,7 +66,7 @@ class CredentialSerializer(serializers.Serializer):
                     not_active = True
             except:
                 pass
-                
+
             if not_active == True:
                 raise serializers.ValidationError('user_not_active')
 
@@ -127,3 +127,20 @@ class UserVerificationSerializer(serializers.Serializer):
 
         activation_key = data['activation_key']
         return data
+
+class ForgottenPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+    def validate(self, data):
+        email = data['email']
+        return data
+
+class PasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True, max_length=1024)
+    new_password = serializers.CharField(required=True, max_length=1024)
+    password_reset_key = serializers.CharField(required=True, max_length=64)
+
+    def validate(self, data):
+        email = data['email']
+        new_password = data['new_password']
+        password_reset_key = data['password_reset_key']
