@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from .forms import LoginForm, RegisterForm, MailUsForm
+from django.core.mail import EmailMultiAlternatives
 from django.contrib.auth import login
 import hashlib
 import re
@@ -92,3 +93,16 @@ def token_authentication(request, key):
 def generate_mac(SECRET_KEY, *args):
     generated_mac = hashlib.sha256(("".join(args)+SECRET_KEY).encode()).hexdigest()
     return generated_mac
+
+def send_template_mail(plaintext_template="", html_template="", context="", subject="", from_email="", to=""):
+    try:
+        text_content = plaintext_template.render(context)
+        html_content = html_template.render(context)
+
+        msg = EmailMultiAlternatives(subject, text_content, from_email, [to])
+        msg.attach_alternative(html_content, 'text/html')
+        msg.send()
+        return True
+
+    except:
+        return False

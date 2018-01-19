@@ -1,0 +1,10 @@
+{% autoescape off %}
+
+Mail sent through the external page contact form.
+
+Full name: {{ full_name }}
+Sent by: {{ sent_by }}
+
+{{ message }}
+
+{% endautoescape %}

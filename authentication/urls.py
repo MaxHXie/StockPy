@@ -23,5 +23,9 @@ urlpatterns = [
     #POST: email, SECRET_API_MAC
     path('forgotten-password', views.ForgottenPasswordAPI.as_view(), name='forgotten_password'),
 
+    path('verify-password-reset', views.VerifyPasswordResetAPI.as_view(), name='verify_password_reset'),
+
+    path('password-reset', views.PasswordResetAPI.as_view(), name='password_reset'),
+
     #path(logout-user/, logout_user, name="logout_user"),
 ]

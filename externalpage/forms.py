@@ -299,3 +299,57 @@ class ForgottenPasswordForm(forms.Form):
         elif match_email(email) == None:
             raise forms.ValidationError("Enter a valid email")
         return email
+
+class NewPasswordForm(forms.Form):
+
+    new_password1 = forms.CharField(
+        max_length = 254,
+        required = True,
+        label = "Password",
+        widget = forms.PasswordInput(
+            attrs = {
+                "type":"password",
+                "id":"password1",
+                "name":"password1",
+                "class":"form-control",
+                "placeholder":"Password...",
+            }
+        )
+    )
+    new_password2 = forms.CharField(
+        max_length = 254,
+        required = True,
+        label = "Password again",
+        widget = forms.PasswordInput(
+            attrs = {
+                "type":"password",
+                "id":"password2",
+                "name":"password2",
+                "class":"form-control",
+                "placeholder":"Password again..."
+            }
+        )
+    )
+
+    def clean_new_password1(self):
+        new_password1 = self.cleaned_data['new_password1']
+        if new_password1 == "":
+            raise forms.ValidationError("You have to enter a password. ")
+        return new_password1
+
+    def clean_new_password2(self):
+        new_password2 = self.cleaned_data['new_password2']
+        if new_password2 == "":
+            raise forms.ValidationError("You have to enter a password. ")
+
+        new_password1 = self.cleaned_data['new_password1']
+        if new_password1 != new_password2:
+            print("yup")
+            raise forms.ValidationError("The passwords you entered to not match. ")
+
+        if len(new_password2) < 7:
+            raise forms.ValidationError("The password needs to be at least 7 characters long. ")
+        elif re.match(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{7,}$", new_password2) is None:
+            raise forms.ValidationError("The password must contain at least, 1 uppercase letter, 1 lowercase letter and 1 number. ")
+
+        return new_password2

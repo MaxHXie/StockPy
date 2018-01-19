@@ -1,14 +1,17 @@
 from django.utils.crypto import get_random_string
-from .serializers import UserSerializer, CredentialSerializer, UserDataSerializer, UserActivationKeySerializer, UserVerificationSerializer, ForgottenPasswordSerializer
+from .serializers import UserSerializer, CredentialSerializer, UserDataSerializer, UserActivationKeySerializer, UserVerificationSerializer, ForgottenPasswordSerializer, VerifyPasswordResetSerializer, PasswordResetSerializer
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from django.http import JsonResponse
+from django.urls import reverse
 from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.authentication import TokenAuthentication
 from django.template.loader import get_template
+from django.utils import timezone
+from . import views
 from .functions import send_template_mail
 from .mixins import AuthMixin
 from .models import Profile
@@ -63,7 +66,8 @@ class CreateUserAPI(AuthMixin, APIView):
 
             plaintext               = get_template('authentication/register_mail.txt')
             htmly                   = get_template('authentication/register_mail.html')
-            context                 = { 'email': email, 'activation_key': activation_key }
+            url                     = 'http://127.0.0.1:8000/verify-user'
+            context                 = { 'url': url, 'email': email, 'activation_key': activation_key }
             subject, from_email, to = 'StockPy - Welcome onboard, ' + first_name + ' ' + last_name , 'localhost@root' , email
 
             if not send_template_mail(plaintext_template=plaintext, html_template=htmly, context=context, subject=subject, from_email=email, to=to):
@@ -173,7 +177,7 @@ class ForgottenPasswordAPI(AuthMixin, APIView):
 
     permission_classes = (AllowAny, )
 
-    def update(user):
+    def update(self, user):
         user.profile.password_reset_key = hashlib.sha256(get_random_string(length=1024).encode()).hexdigest()
         user.profile.password_reset_key_expires = datetime.datetime.strftime(datetime.datetime.now() + datetime.timedelta(days=2), "%Y-%m-%d %H:%M:%S")
         user.profile.save()
@@ -187,24 +191,54 @@ class ForgottenPasswordAPI(AuthMixin, APIView):
 
             if not self.validate_mac(request.data['MAC'], SECRET_KEY, email):
                 return JsonResponse({'error': 'invalid_mac'})
-            if get_user(email) == None:
+            if self.get_user(email) == None:
                 return JsonResponse({'error': 'user_not_exist'})
+            user = self.get_user(email)
 
-            user = get_user(email)
+            self.update(user)
 
-            update(user)
-
-            plaintext               = get_template('forgotten_password_mail.txt')
-            htmly                   = get_template('forgotten_password_mail.html')
-            context                 = { 'email':email, 'password_reset_key': user.profile.password_reset_key }
+            plaintext               = get_template('authentication/forgotten_password_mail.txt')
+            htmly                   = get_template('authentication/forgotten_password_mail.html')
+            url                     = 'http://127.0.0.1:8000/password-reset'
+            context                 = { 'url': url, 'email':email, 'password_reset_key': user.profile.password_reset_key }
             subject, from_email, to = 'StockPy - Password reset' , 'localhost@root' , email
-            if not send_template_mail(plaintext_template=plaintext, html_template=htmly, context=context, subject=subject, from_email=to_email, to=to):
+            if not send_template_mail(plaintext_template=plaintext, html_template=htmly, context=context, subject=subject, from_email='localhost@root', to=email):
                 return JsonResponse({'error': 'key_created_no_email'})
 
             return JsonResponse({'error': ''})
         return JsonResponse({"error": list(serializer.errors.values())[0][0]})
 
-class ResetPasswordAPI(AuthMixin, APIView):
+class VerifyPasswordResetAPI(AuthMixin, APIView):
+    """
+    Input: username, password_reset_key in a Request
+    Output: Error in a JsonResponse
+    """
+
+    permission_classes = (AllowAny, )
+
+    def post(self, request):
+        serializer = VerifyPasswordResetSerializer(data=request.data)
+        if serializer.is_valid():
+            SECRET_KEY = "h2489o12bri29re8fohb23de097f2v3r2iyuifwyusihc73quao8cg2vudiqgw23"
+            username = serializer.validated_data['username']
+            password_reset_key = serializer.validated_data['password_reset_key']
+
+            if not self.validate_mac(request.data['MAC'], SECRET_KEY, username, password_reset_key):
+                return JsonResponse({'error': 'invalid_mac'})
+            if self.get_user(username) == None:
+                return JsonResponse({'error': 'user_not_exist'})
+            user = self.get_user(username)
+
+            if timezone.now() > user.profile.password_reset_key_expires:
+                return JsonResponse({'error': 'password_reset_key_expired'})
+            elif password_reset_key != "" and password_reset_key == user.profile.password_reset_key and user.profile.password_reset_key != "":
+                return JsonResponse({'error': ''})
+            elif user.profile.password_reset_key == "":
+                return JsonResponse({'error': 'no_password_reset_key_set'})
+            return JsonResponse({'error': 'invalid_password_reset_key'})
+        return JsonResponse({'error': list(serializer.errors.values())[0][0]})
+
+class PasswordResetAPI(AuthMixin, APIView):
     """
     Input: email, new password, password_reset_key in a Request
     Output: error in a JsonResponse
@@ -215,21 +249,23 @@ class ResetPasswordAPI(AuthMixin, APIView):
     def post(self, request):
         serializer = PasswordResetSerializer(data=request.data)
         if serializer.is_valid():
-            SECRET_KEY  = "1l9in7tw8wwqoaslöqiuwo1soiskuresodkweklowkp67lbaoq1ir546hwi38jyk"
+            SECRET_KEY = "pnqlif3orpq7ftpfr4oq8ftrqo874trfoi7wqbta7bfrv43lqyegfro2wa1yaqu4"
             email       = serializer.validated_data['email']
-            new_password = serializer.validated_data['new_password']
             password_reset_key = serializer.validated_data['password_reset_key']
+            new_password = serializer.validated_data['new_password']
 
-            if not self.validate_mac(request.data['MAC'], SECRET_KEY, email, new_password, password_reset_key):
+            if not self.validate_mac(request.data['MAC'], SECRET_KEY, email, password_reset_key, new_password):
                 return JsonResponse({'error': 'invalid_mac'})
             if self.get_user(email) == None:
                 return JsonResponse({'error': 'user_not_exist'})
             user = self.get_user(email)
 
-            if password_reset_key != "" and password_reset_key == user.profile.password_reset_key:
+            if timezone.now() > user.profile.password_reset_key_expires:
+                return JsonResponse({'error': 'password_reset_key_expired'})
+            elif password_reset_key != "" and password_reset_key == user.profile.password_reset_key and user.profile.password_reset_key != "":
                 user.set_password(new_password)
                 user.profile.password_reset_key = ""
-                profile.save()
+                user.profile.save()
                 user.save()
                 return JsonResponse({'error':''})
             elif user.profile.password_reset_key == "":

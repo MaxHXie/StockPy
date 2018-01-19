@@ -109,10 +109,36 @@ def request_forgotten_password(request, email):
     else:                                   returnDict['error'] = error
     return returnDict
 
-def request_reset_password(request, email, new_password, password_reset_key):
+def request_verify_password_reset_key(request, username, password_reset_key):
+    SECRET_KEY = "h2489o12bri29re8fohb23de097f2v3r2iyuifwyusihc73quao8cg2vudiqgw23"
+    MAC = generate_mac(SECRET_KEY, username, password_reset_key)
+    r = requests.post('http://127.0.0.1:8000/api-auth/verify-password-reset',
+                        data = {
+                            'username':username,
+                            'password_reset_key':password_reset_key,
+                            'MAC':MAC,
+                        },
+                        verify=True,
+                     )
+
+    response = r.json()
+    returnDict = {'error': ''}
+    print(response)
+    error = response['error']
+
+    if error == '':                             returnDict['error'] = ''
+    elif error == 'invalid_mac':                returnDict['error'] = 'There was a connection error, please try again'
+    elif error == 'user_not_exist':             returnDict['error'] = 'That user does not exist'
+    elif error == 'invalid_password_reset_key': returnDict['error'] = 'That verification link is invalid'
+    elif error == 'no_password_reset_key_set':  returnDict['error'] = 'You currently do not have any active password reset links'
+    elif error == 'password_reset_key_expired': returnDict['error'] = 'That password reset link has expired.'
+    else:                                       returnDict['error'] = error
+    return returnDict
+
+def request_reset_password(request, email, password_reset_key, new_password):
     SECRET_KEY = "pnqlif3orpq7ftpfr4oq8ftrqo874trfoi7wqbta7bfrv43lqyegfro2wa1yaqu4"
-    MAC = generate_mac(SECRET_KEY, email, new_password, password_reset_key)
-    r = requests.post('http://127.0.0.1:8000/api-auth/reset-password',
+    MAC = generate_mac(SECRET_KEY, email, password_reset_key, new_password)
+    r = requests.post('http://127.0.0.1:8000/api-auth/password-reset',
                         data = {
                             'email':email,
                             'new_password':new_password,
@@ -120,7 +146,7 @@ def request_reset_password(request, email, new_password, password_reset_key):
                             'MAC':MAC,
                         },
                         verify=True,
-                    )
+                     )
 
     #response = {'error': 'error_message'}
     response = r.json()
@@ -130,7 +156,8 @@ def request_reset_password(request, email, new_password, password_reset_key):
     if error    == '':                          returnDict['error'] = ''
     elif error  == 'invalid_mac':               returnDict['error'] = 'There was a connection error, please try again'
     elif error  == 'user_not_exist':            returnDict['error'] = 'That user does not exist'
-    elif error  == 'no_password_reset_key_set': returnDict['error'] = 'This user has not requested for a password reset.'
-    elif error  == 'key_created_no_email':      returnDict['error'] = 'The key was created but we could not send the email'
+    elif error  == 'no_password_reset_key_set': returnDict['error'] = 'You currently do not have any active password reset links'
+    elif error == 'invalid_password_reset_key': returnDict['error'] = 'That verification link is invalid'
+    elif error == 'password_reset_key_expired': returnDict['error'] = 'That password reset link has expired.'
     else:                                       returnDict['error'] = error
     return returnDict
